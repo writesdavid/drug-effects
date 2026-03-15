@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drug Effects — Open Primitive</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0c0a10;
+      --surface: #13111a;
+      --surface2: #1a1724;
+      --border: #221e2e;
+      --border2: #2d2840;
+      --accent: #a855f7;
+      --accent-dim: #7c3aed;
+      --text: #e2dff0;
+      --text-muted: #8b85a0;
+      --text-dim: #5c5675;
+      --red: #ef4444;
+      --red-dim: #7f1d1d;
+      --orange: #f97316;
+      --orange-dim: #7c2d12;
+      --green: #22c55e;
+    }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* Header */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 40px 0 32px;
+      margin-bottom: 40px;
+    }
+
+    .header-eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: clamp(28px, 5vw, 42px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+      margin-bottom: 12px;
+      line-height: 1.15;
+    }
+
+    .tagline {
+      font-size: 18px;
+      color: var(--text);
+      margin-bottom: 10px;
+      font-weight: 400;
+    }
+
+    .sub {
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 600px;
+      line-height: 1.7;
+    }
+
+    /* Search */
+    .search-section {
+      margin-bottom: 36px;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .search-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 13px 18px;
+      font-size: 16px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .search-input::placeholder { color: var(--text-dim); }
+    .search-input:focus { border-color: var(--accent); }
+
+    .search-btn {
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      padding: 13px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .search-btn:hover { background: var(--accent-dim); }
+    .search-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .examples-label {
+      font-size: 12px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 500;
+    }
+
+    .chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 13px;
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* State messages */
+    .state-msg {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-dim);
+      font-size: 15px;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 2px solid var(--border2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Disclaimer */
+    .disclaimer {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-left: 3px solid var(--orange);
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .disclaimer strong {
+      color: var(--orange);
+      display: block;
+      margin-bottom: 4px;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* Results */
+    #results { display: none; }
+
+    .results-drug-name {
+      font-size: 13px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .results-drug-name span {
+      color: var(--accent);
+    }
+
+    /* Stats row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 18px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .stat-number {
+      font-size: clamp(22px, 4vw, 32px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-number.color-total { color: var(--text); }
+    .stat-number.color-serious { color: var(--orange); }
+    .stat-number.color-death { color: var(--red); }
+
+    .stat-pct {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    /* Sections */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 22px 22px;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-dim);
+      margin-bottom: 20px;
+    }
+
+    /* Bar chart */
+    .bar-list {
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+
+    .bar-item {
+      display: grid;
+      grid-template-columns: 200px 1fr 60px;
+      align-items: center;
+      gap: 12px;
+    }
+
+    @media (max-width: 540px) {
+      .bar-item {
+        grid-template-columns: 140px 1fr 50px;
+        gap: 8px;
+      }
+    }
+
+    .bar-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bar-track {
+      background: var(--surface2);
+      border-radius: 3px;
+      height: 10px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    .bar-count {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Label warnings */
+    .warning-block {
+      margin-bottom: 20px;
+    }
+
+    .warning-block:last-child { margin-bottom: 0; }
+
+    .warning-sublabel {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+    }
+
+    .warning-text {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent-dim);
+      border-radius: 6px;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.75;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Recent events note */
+    .recent-note {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .recent-note strong {
+      color: var(--text);
+    }
+
+    /* Error */
+    .error-box {
+      background: var(--surface);
+      border: 1px solid var(--red-dim);
+      border-radius: 10px;
+      padding: 22px;
+      color: var(--red);
+      font-size: 14px;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 0 40px;
+      margin-top: 60px;
+      font-size: 12px;
+      color: var(--text-dim);
+      text-align: center;
+      line-height: 1.8;
+    }
+
+    footer a { color: var(--text-dim); }
+    footer a:hover { color: var(--accent); }
+
+    @media (max-width: 480px) {
+      .stats-row { grid-template-columns: 1fr; }
+      .search-row { flex-direction: column; }
+      .search-btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-eyebrow">Open Primitive</div>
+      <h1>Drug Effects</h1>
+      <p class="tagline">What patients actually reported to the FDA.</p>
+      <p class="sub">The FDA receives adverse event reports from patients, doctors, and manufacturers. This is what they filed — not what the label says, what people experienced.</p>
+    </header>
+
+    <section class="search-section">
+      <div class="search-row">
+        <input
+          type="text"
+          class="search-input"
+          id="drugInput"
+          placeholder="Enter a drug name (brand or generic)..."
+          autocomplete="off"
+          autocorrect="off"
+          spellcheck="false"
+        />
+        <button class="search-btn" id="searchBtn" onclick="search()">Search</button>
+      </div>
+      <div class="examples">
+        <span class="examples-label">Try:</span>
+        <span class="chip" onclick="searchDrug('ibuprofen')">ibuprofen</span>
+        <span class="chip" onclick="searchDrug('metformin')">metformin</span>
+        <span class="chip" onclick="searchDrug('lisinopril')">lisinopril</span>
+        <span class="chip" onclick="searchDrug('sertraline')">sertraline</span>
+        <span class="chip" onclick="searchDrug('atorvastatin')">atorvastatin</span>
+        <span class="chip" onclick="searchDrug('omeprazole')">omeprazole</span>
+      </div>
+    </section>
+
+    <div id="status"></div>
+    <div id="results"></div>
+
+    <footer>
+      Data: <a href="https://www.fda.gov/drugs/questions-and-answers-fdas-adverse-event-reporting-system-faers/fda-adverse-event-reporting-system-faers-public-dashboard" target="_blank">FDA Adverse Event Reporting System (FAERS)</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://open.fda.gov/apis/drug/event/" target="_blank">openFDA API</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://www.fda.gov" target="_blank">fda.gov</a>
+    </footer>
+  </div>
+
+  <script>
+    const input = document.getElementById('drugInput');
+    const btn = document.getElementById('searchBtn');
+    const statusEl = document.getElementById('status');
+    const resultsEl = document.getElementById('results');
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') search();
+    });
+
+    function searchDrug(name) {
+      input.value = name;
+      search();
+    }
+
+    function search() {
+      const name = input.value.trim();
+      if (!name) return;
+      fetchDrug(name);
+    }
+
+    function fmt(n) {
+      if (n === null || n === undefined) return '—';
+      return n.toLocaleString();
+    }
+
+    function pct(a, b) {
+      if (!b) return '';
+      const p = ((a / b) * 100).toFixed(1);
+      return `${p}% of reports`;
+    }
+
+    function showLoading() {
+      statusEl.innerHTML = `
+        <div class="state-msg">
+          <div class="spinner"></div>
+          Querying FDA adverse event database...
+        </div>`;
+      resultsEl.style.display = 'none';
+      resultsEl.innerHTML = '';
+    }
+
+    function showError(msg) {
+      statusEl.innerHTML = '';
+      resultsEl.style.display = 'block';
+      resultsEl.innerHTML = `<div class="error-box">${msg}</div>`;
+    }
+
+    function renderResults(data) {
+      statusEl.innerHTML = '';
+      resultsEl.style.display = 'block';
+
+      const maxCount = data.topReactions.length > 0 ? data.topReactions[0].count : 1;
+
+      const barsHtml = data.topReactions.length > 0 ? data.topReactions.map(r => {
+        const width = Math.round((r.count / maxCount) * 100);
+        return `
+          <div class="bar-item">
+            <div class="bar-label" title="${r.reaction}">${r.reaction.toLowerCase()}</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width: ${width}%"></div>
+            </div>
+            <div class="bar-count">${fmt(r.count)}</div>
+          </div>`;
+      }).join('') : '<p style="color:var(--text-dim);font-size:13px;">No reaction data available.</p>';
+
+      let warningsHtml = '';
+      if (data.labelWarnings) {
+        warningsHtml = `
+          <div class="section">
+            <div class="section-title">FDA Label Warnings</div>
+            ${data.labelWarnings.warnings ? `
+              <div class="warning-block">
+                <div class="warning-sublabel">Warnings</div>
+                <div class="warning-text">${escHtml(data.labelWarnings.warnings)}</div>
+              </div>` : ''}
+            ${data.labelWarnings.adverseReactions ? `
+              <div class="warning-block">
+                <div class="warning-sublabel">Adverse Reactions (from label)</div>
+                <div class="warning-text">${escHtml(data.labelWarnings.adverseReactions)}</div>
+              </div>` : ''}
+          </div>`;
+      }
+
+      resultsEl.innerHTML = `
+        <div class="results-drug-name">Showing results for <span>${escHtml(data.drug.toUpperCase())}</span></div>
+
+        <div class="disclaimer">
+          <strong>Important</strong>
+          FAERS reports are unverified. A report does not establish that the drug caused the reaction. Reports come from patients and healthcare providers and may include pre-existing conditions.
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">Total Reports</div>
+            <div class="stat-number color-total">${fmt(data.totalEvents)}</div>
+            <div class="stat-pct">all time in FAERS</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Serious Events</div>
+            <div class="stat-number color-serious">${fmt(data.seriousEvents)}</div>
+            <div class="stat-pct">${pct(data.seriousEvents, data.totalEvents)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Death Reports</div>
+            <div class="stat-number color-death">${fmt(data.deathEvents)}</div>
+            <div class="stat-pct">${pct(data.deathEvents, data.totalEvents)}</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Top 10 Reported Reactions</div>
+          <div class="bar-list">${barsHtml}</div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Recent Activity</div>
+          <p class="recent-note">
+            <strong>${fmt(data.recentEvents)}</strong> reports received in the last two years (2024–2025).
+            ${data.totalEvents > 0 ? `That's ${((data.recentEvents / data.totalEvents) * 100).toFixed(1)}% of all historical reports.` : ''}
+          </p>
+        </div>
+
+        ${warningsHtml}
+      `;
+    }
+
+    function escHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    async function fetchDrug(name) {
+      showLoading();
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/drug?name=${encodeURIComponent(name)}`);
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          showError(data.error || 'Something went wrong. Please try again.');
+          return;
+        }
+
+        renderResults(data);
+      } catch (err) {
+        showError('Could not reach the server. Please try again.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
