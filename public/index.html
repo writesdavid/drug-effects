@@ -52,6 +52,12 @@
     .results-drug-name span {
       color: var(--accent);
     }
+
+    @keyframes card-drop {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .card-drop-anim { animation: card-drop 0.3s ease-out both; }
   </style>
 </head>
 <body>
@@ -83,7 +89,7 @@
         autocorrect="off"
         spellcheck="false"
       />
-      <button class="op-btn" id="searchBtn" onclick="search()">Search</button>
+      <button class="op-btn" id="searchBtn" onclick="search()">Pull the file</button>
     </div>
 
     <div class="op-chips" style="margin-bottom: 36px;">
@@ -146,10 +152,22 @@
       statusEl.innerHTML = `
         <div class="op-loading">
           <div class="op-spinner"></div>
-          Querying FDA adverse event database...
+          Pulling the file...
         </div>`;
       resultsEl.style.display = 'none';
       resultsEl.innerHTML = '';
+    }
+
+    function countUp(el, target, duration = 1000) {
+      if (!el || target == null) return;
+      const start = performance.now();
+      function step(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        el.textContent = Math.round(progress * target).toLocaleString();
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
     }
 
     function showError(msg) {
@@ -205,17 +223,17 @@
         <div class="op-stats op-stats-3" style="margin-bottom: 28px;">
           <div class="op-stat">
             <div class="op-stat-label">Total Reports</div>
-            <div class="op-stat-num signal">${fmt(data.totalEvents)}</div>
+            <div class="op-stat-num signal" id="stat-total">0</div>
             <div style="font-size:12px;color:var(--dim);">all time in FAERS</div>
           </div>
           <div class="op-stat">
             <div class="op-stat-label">Serious Events</div>
-            <div class="op-stat-num warn">${fmt(data.seriousEvents)}</div>
+            <div class="op-stat-num warn" id="stat-serious">0</div>
             <div style="font-size:12px;color:var(--dim);">${pct(data.seriousEvents, data.totalEvents)}</div>
           </div>
           <div class="op-stat">
             <div class="op-stat-label">Death Reports</div>
-            <div class="op-stat-num danger">${fmt(data.deathEvents)}</div>
+            <div class="op-stat-num danger" id="stat-deaths">0</div>
             <div style="font-size:12px;color:var(--dim);">${pct(data.deathEvents, data.totalEvents)}</div>
           </div>
         </div>
@@ -235,6 +253,15 @@
 
         ${warningsHtml}
       `;
+
+      countUp(document.getElementById('stat-total'),   data.totalEvents);
+      countUp(document.getElementById('stat-serious'),  data.seriousEvents);
+      countUp(document.getElementById('stat-deaths'),   data.deathEvents);
+
+      resultsEl.querySelectorAll('.op-card').forEach((card, i) => {
+        card.classList.add('card-drop-anim');
+        card.style.animationDelay = `${i * 100}ms`;
+      });
     }
 
     function escHtml(str) {
