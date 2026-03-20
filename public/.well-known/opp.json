@@ -1,0 +1,43 @@
+{
+  "schema_version": "0.1.0",
+  "name": "Drug Effects",
+  "description": "Adverse event reports from FDA FAERS. Voluntary reporting captures an estimated 1-10% of actual events.",
+  "provider": "Open Primitive",
+  "provider_url": "https://openprimitive.com",
+  "endpoints": [
+    {
+      "path": "/api/drug",
+      "method": "GET",
+      "parameters": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "Drug name (brand or generic)"
+        }
+      },
+      "response_fields": {
+        "drug": "Queried drug name",
+        "totalEvents": "Total adverse event reports",
+        "seriousEvents": "Reports classified as serious",
+        "deathEvents": "Reports involving death",
+        "recentEvents": "Reports from 2024-2025",
+        "topReactions": "Top 10 reported reactions with counts",
+        "labelWarnings": "FDA label warnings and adverse reactions text",
+        "source_url": "API source URL",
+        "freshness": "ISO timestamp of response generation",
+        "confidence": "Data completeness and methodology metadata",
+        "citations": "Attribution statement with source and license"
+      }
+    }
+  ],
+  "sources": [
+    {
+      "name": "FDA FAERS",
+      "url": "https://api.fda.gov",
+      "license": "US Government Public Domain",
+      "methodology": "voluntary-reporting",
+      "completeness": 0.10,
+      "note": "FDA FAERS captures estimated 1-10% of adverse events. Voluntary reporting creates severe undercounting."
+    }
+  ]
+}

@@ -160,7 +160,21 @@ app.get('/api/drug', async (req, res) => {
     if (data.error) {
       return res.status(404).json(data);
     }
-    res.json(data);
+    res.json({
+      ...data,
+      source_url: 'https://api.fda.gov',
+      freshness: new Date().toISOString(),
+      confidence: {
+        completeness: 0.10,
+        methodology: 'voluntary-reporting',
+        note: 'FDA FAERS captures estimated 1-10% of adverse events. Voluntary reporting creates severe undercounting.'
+      },
+      citations: {
+        statement: `According to FDA FAERS, ${data.drug} has ${data.totalEvents} reported adverse events`,
+        source_url: 'https://api.fda.gov',
+        license: 'US Government Public Domain'
+      }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch data from FDA.' });
